@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Globalization;
 using System.IO;
 using System.Text;
@@ -21,7 +22,7 @@ namespace SeaModeReadWrite
          
         }
         
-        private const string riviOtsikkoPattern_c = "^Date_PC;Time_PC";
+        //private const string riviOtsikkoPattern_c = "^Date_PC;Time_PC"; nyt configissa
         private Boolean IsOtsikkoTehty = false;
         private DateTime startTime;
         private DateTime endTime;
@@ -37,7 +38,8 @@ namespace SeaModeReadWrite
         {
             List<String> filekset = new List<String>();
             // Muuta seuraavat syötteeksi tai jostain configista haettavaksi
-            DirectoryInfo di = new DirectoryInfo(@"D:\scrum projekti\myairbridge-kSWEva1J3");
+            //DirectoryInfo di = new DirectoryInfo(@"D:\scrum projekti\myairbridge-kSWEva1J3");
+            DirectoryInfo di = new DirectoryInfo(ConfigurationManager.AppSettings["fileDirectory"]);
             String esimerkki = "SeaMODE_20190928_112953.csv";
             int pit = esimerkki.Length;
             foreach (var fi in di.GetFiles())
@@ -53,7 +55,8 @@ namespace SeaModeReadWrite
         // Haetaan rivit yhdelle tiedostolle
         public void lueTiedosto(string fileName)
         {
-            String riviOtsikkoPattern = "^Date_PC;Time_PC";
+            //String riviOtsikkoPattern = "^Date_PC;Time_PC";
+            String riviOtsikkoPattern = ConfigurationManager.AppSettings["riviOtsikkoPattern"];
             Boolean isOtsikkoOhi = false;
             using (StreamReader sr = File.OpenText(fileName))
             {
