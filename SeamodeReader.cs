@@ -19,9 +19,16 @@ namespace SeaModeReadWrite
             string pvmFormator = String.Format("yyyyMMdd");
             startPattern = startPattern_c + startTime.ToString(pvmFormator);
             rivit = new ArrayList();
-         
         }
-        
+        public SeamodeReader(DateTime aloitusAika, DateTime lopetusAika, string outFile)
+        {
+            startTime = aloitusAika;
+            endTime = lopetusAika;
+            string pvmFormator = String.Format("yyyyMMdd");
+            startPattern = startPattern_c + startTime.ToString(pvmFormator);
+            rivit = new ArrayList();
+        }
+
         //private const string riviOtsikkoPattern_c = "^Date_PC;Time_PC"; nyt configissa
         private Boolean IsOtsikkoTehty = false;
         private DateTime startTime;
@@ -33,6 +40,9 @@ namespace SeaModeReadWrite
 
         public ArrayList rivit { get; }
         public string outDire { get; set; }
+        public List<GpxLine> gpxLines { get; set; }
+        public string boatType { get; }
+       
 
         public List<String> haeTiedostot()
         {
@@ -56,6 +66,7 @@ namespace SeaModeReadWrite
         public void lueTiedosto(string fileName)
         {
             //String riviOtsikkoPattern = "^Date_PC;Time_PC";
+            string rgBoatType = ConfigurationManager.AppSettings["boatType"];
             String riviOtsikkoPattern = ConfigurationManager.AppSettings["riviOtsikkoPattern"];
             Boolean isOtsikkoOhi = false;
             using (StreamReader sr = File.OpenText(fileName))
@@ -83,8 +94,54 @@ namespace SeaModeReadWrite
                     // Otsikko luettu myös ensimmäisen tiedoston jälkeen.
                     if (IsOtsikkoTehty && !isOtsikkoOhi && Regex.IsMatch(luettu, riviOtsikkoPattern))
                         isOtsikkoOhi = true;
+                    //if (boatType == null && Regex.IsMatch(fi.Name, rgBoatType)
+                       
                 }
             }
+        }
+        public void haeGpxData(string fileName)
+        {
+            String riviOtsikkoPattern = ConfigurationManager.AppSettings["riviOtsikkoPattern"];
+            bool isOtsikkoOhi = false;
+            using (StreamReader sr = File.OpenText(fileName))
+            {
+                string luettu = "";
+                DateTime prevDateTime = DateTime.MinValue;
+                while ((luettu = sr.ReadLine()) != null)
+                {
+                    if (isOtsikkoOhi && tarkistaAika(luettu))
+                    {
+                        //Nullable<DateTime> prevDateTime = null;
+                        DateTime newDateTime;
+                        // Tehdään gpx instanssin luonti sekunnin välein
+                        newDateTime = muodostoGpxAika(luettu);
+                        TimeSpan tp = newDateTime - prevDateTime;
+                        if (tp.TotalSeconds >= 1)
+                        {
+                            TeeGpx(luettu);
+                            prevDateTime = muodostoGpxAika(luettu);
+                        }
+                    }
+                    if (Regex.IsMatch(luettu, riviOtsikkoPattern))
+                    {
+                        isOtsikkoOhi = true;
+                    }
+                }
+            }
+
+        }
+        private void TeeGpx(string luettuRivi)
+        {
+            if (gpxLines == null)
+                gpxLines = new List<GpxLine>();
+            
+            string[] arvot = luettuRivi.Split(';');
+            DateTime aika = DateTime.ParseExact(arvot[23] + " " + arvot[24], "dd.MM.yyyy HH:mm:ss.fff", cultureInfo);
+            //GpxLine gpxLine = new GpxLine(aika, arvot[25], arvot[27], arvot[29]);  
+            GpxLine gpxLine = new GpxLine(aika);
+            gpxLine.setLatitude(arvot[25]);
+            gpxLine.setLongitude(arvot[27]);
+            gpxLines.Add(gpxLine);
         }
         // Tarkistetaan aika
         private Boolean tarkistaAika(string luettuRivi)
@@ -99,6 +156,12 @@ namespace SeaModeReadWrite
                 return true;
             else
                 return false;
+        }
+        private DateTime muodostoGpxAika(string luettuRivi)
+        {
+            string[] arvot = luettuRivi.Split(';');
+            DateTime aika = DateTime.ParseExact(arvot[23] + " " + arvot[24], "dd.MM.yyyy HH:mm:ss.fff", cultureInfo);
+            return aika;
         }
 
     }
