@@ -1,5 +1,7 @@
-﻿using System;
+﻿using RaakadataLibrary;
+using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Globalization;
 
 namespace SeaModeReadWrite
@@ -8,9 +10,10 @@ namespace SeaModeReadWrite
     {
         static void Main(string[] args)
         {
+            Console.WriteLine(ConfigurationManager.AppSettings["fileDirectory"]);
             // Haetaan tiedostot
             string aloitusAika = "28.09.2019" + " 11:29:56";
-            string lopetusAika = "28.09.2019" + " 11:30:15";
+            string lopetusAika = "28.09.2019" + " 13:40:15";
             CultureInfo cultureInfo = new CultureInfo("fi-FI");
             DateTime aloitus = DateTime.ParseExact(aloitusAika, "dd.MM.yyyy HH:mm:ss", cultureInfo);
             DateTime lopetus = DateTime.ParseExact(lopetusAika, "dd.MM.yyyy HH:mm:ss", cultureInfo);
@@ -23,16 +26,24 @@ namespace SeaModeReadWrite
             foreach(string tiedosto in filekset)
             {
                 Console.WriteLine("Tiedosto: " + tiedosto);
-                seamodeReader.lueTiedosto(tiedosto);
+                //seamodeReader.lueTiedosto(tiedosto);
+                seamodeReader.haeGpxData(tiedosto);
             }
-            Console.WriteLine("Rivejä haettiin mukaanlukien otsikko: " + seamodeReader.rivit.Count + " kappaletta");
-            
+            //Console.WriteLine("Rivejä haettiin mukaanlukien otsikko: " + seamodeReader.rivit.Count + " kappaletta");
+            Console.WriteLine("Gpx rivejä haettiin: " + seamodeReader.gpxLines.Count + " kappaletta");
+            /*foreach(GpxLine gl in seamodeReader.gpxLines)
+            {
+                Console.WriteLine("Aika. " + gl.eventTime.ToString() + " Latitude: " + gl.latitude + " longitude: " + gl.longitude);
+            }*/
+            SeamodeGpxWriter seamodeGpxWriter = new SeamodeGpxWriter();
+            seamodeGpxWriter.writeGpx(seamodeReader.gpxLines);
+
             // Kirjoitetaan
-            Console.WriteLine("Kitjoitetaan tiedostoon: " + seamodeReader.outDire + "\\koonti.csv");
-            SeamodeWriter seamodeWriter = new SeamodeWriter();
+            //Console.WriteLine("Kitjoitetaan tiedostoon: " + seamodeReader.outDire + "\\koonti.csv");
+            //SeamodeWriter seamodeWriter = new SeamodeWriter();
             // Molemmat pitää jatkossa hakea confauksesta
-            seamodeWriter.outFile = seamodeReader.outDire + "\\koonti.csv";
-            seamodeWriter.kirjoita(seamodeReader.rivit);
+           // seamodeWriter.outFile = seamodeReader.outDire + "\\koonti.csv";
+           // seamodeWriter.kirjoita(seamodeReader.rivit);
 
         }
     }
